@@ -1,68 +1,58 @@
 import streamlit as st
 
-# ----------------- Page config -----------------
+# ---------------- Page config ----------------
 st.set_page_config(page_title="Plant Chatbot", page_icon="🌱", layout="centered")
 
 st.title("🌱 Plant Health Chatbot")
 st.write("Ask any question about plant roots, nematodes, or diagnostics.")
 
-# ----------------- File upload section -----------------
+# ---------------- FILE UPLOAD SECTION ----------------
 uploaded_file = st.file_uploader(
     "📤 Upload a plant root image (JPG or PNG)",
     type=["jpg", "jpeg", "png"]
 )
 
-if uploaded_file is not None:
-    # Show a preview of the uploaded image
+# Track whether an image exists
+has_image = uploaded_file is not None
+
+if has_image:
     st.image(uploaded_file, caption="Uploaded image", use_column_width=True)
-    st.success("Image uploaded successfully! (We can add automatic analysis here later.)")
+    st.success("Image uploaded successfully!")
+else:
+    st.info("Upload a root image if you want help scoring galling.")
 
-st.markdown("---")  # nice separator between upload and chat
+st.markdown("---")
 
-# ----------------- Chatbot logic -----------------
+# ---------------- CHATBOT SECTION ----------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-def bot_response(user_text: str) -> str:
+
+def bot_response(user_text: str, has_image: bool) -> str:
     text = user_text.lower()
 
-    if "nematode" in text or "root-knot" in text:
+    # Galling scoring
+    if "gall" in text or "galling" in text or "score" in text:
+        if has_image:
+            return (
+                "Here is the **1–5 galling severity scale**:\n\n"
+                "**1 – No galls**: Roots appear normal.\n"
+                "**2 – Light galling**: A few small galls on lateral roots.\n"
+                "**3 – Moderate galling**: Many galls across lateral roots; main root visible.\n"
+                "**4 – Heavy galling**: Large, coalescing galls covering much of the system.\n"
+                "**5 – Severe galling**: Root system almost completely replaced by galled tissue.\n\n"
+                "Look at your uploaded root image above and tell me which score (1–5) it most closely matches."
+            )
+        else:
+            return "Please **upload a root image above** so I can help you score the galling."
+
+    # Nematode questions
+    if "nematode" in text or "root-knot" in text or "root knot" in text:
         return (
-            "Root-knot nematodes (Meloidogyne spp.) cause galls on roots and reduce "
-            "water and nutrient uptake. Do you want to talk about symptoms, "
-            "management strategies, or detection methods?"
+            "Root-knot nematodes (Meloidogyne spp.) cause galls and reduce water and nutrient uptake. "
+            "Would you like help with **symptoms**, **management**, or **diagnostics**?"
         )
-    if "root" in text and "disease" in text:
-        return (
-            "Roots can show browning, lesions, galls, or rot depending on the pathogen. "
-            "Which crop and what symptoms are you seeing (galls, rot, stunting, yellowing)?"
-        )
+
+    # Greeting
     if "hello" in text or "hi" in text:
-        return "Hello! 👋 How can I help you today?"
-
-    return (
-        "I'm here to help with plant health questions, especially roots and nematodes. "
-        "Tell me what crop you’re working with and what you’re observing."
-    )
-
-# Show previous messages
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
-
-# Input box at the bottom
-user_input = st.chat_input("Type your message…")
-
-if user_input:
-    # Store and show user message
-    st.session_state.messages.append({"role": "user", "content": user_input})
-    with st.chat_message("user"):
-        st.markdown(user_input)
-
-    # Get bot reply
-    answer = bot_response(user_input)
-
-    # Store and show bot reply
-    st.session_state.messages.append({"role": "assistant", "content": answer})
-    with st.chat_message("assistant"):
-        st.markdown(answer)
+        return "Hello
